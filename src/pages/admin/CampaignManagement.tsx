@@ -156,7 +156,9 @@ const CampaignManagement = () => {
                   />
                 </TableCell>
                 <TableCell>
-                  {format(new Date(campaign.createdAt), 'yyyy-MM-dd HH:mm')}
+                  {campaign.createdAt
+                    ? format(new Date(campaign.createdAt), 'yyyy-MM-dd HH:mm')
+                    : '-'}
                 </TableCell>
               </TableRow>
             ))}
