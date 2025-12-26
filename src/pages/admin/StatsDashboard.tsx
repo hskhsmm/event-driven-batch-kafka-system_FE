@@ -21,6 +21,16 @@ import { Search } from '@mui/icons-material';
 import type { DailyStatsResponse } from '../../types/index';
 import { getDailyStats } from '../../api';
 import { format } from 'date-fns';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from 'recharts';
 
 const StatsDashboard = () => {
   const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
@@ -198,6 +208,31 @@ const StatsDashboard = () => {
                   </TableBody>
                 </Table>
               </TableContainer>
+
+              {/* 캠페인별 비교 차트 */}
+              <Box sx={{ mt: 4, height: 400 }}>
+                <Typography variant="h6" gutterBottom>
+                  캠페인별 성공/실패 비교
+                </Typography>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={stats.campaigns.map((c) => ({
+                      name: c.campaignName,
+                      성공: c.successCount,
+                      실패: c.failCount,
+                    }))}
+                    margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="성공" fill="#4caf50" />
+                    <Bar dataKey="실패" fill="#f44336" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </Box>
             </Paper>
           )}
         </>
