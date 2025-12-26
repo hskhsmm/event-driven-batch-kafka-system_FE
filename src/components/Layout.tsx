@@ -1,8 +1,28 @@
-import { Link, Outlet } from 'react-router-dom';
-import { AppBar, Toolbar, Typography, Button, Container, Box } from '@mui/material';
-import { Home, AdminPanelSettings } from '@mui/icons-material';
+import { Link, Outlet, useLocation } from 'react-router-dom';
+import {
+  AppBar,
+  Toolbar,
+  Typography,
+  Button,
+  Container,
+  Box,
+  Tabs,
+  Tab,
+} from '@mui/material';
+import { Home, Campaign, BarChart, Schedule } from '@mui/icons-material';
 
 const Layout = () => {
+  const location = useLocation();
+  const isAdminPage = location.pathname.startsWith('/admin');
+
+  // 관리자 페이지 탭 값
+  const getAdminTabValue = () => {
+    if (location.pathname === '/admin/campaigns') return 0;
+    if (location.pathname === '/admin/stats') return 1;
+    if (location.pathname === '/admin/batch') return 2;
+    return 0;
+  };
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <AppBar position="static">
@@ -11,17 +31,39 @@ const Layout = () => {
             선착순 이벤트 시스템
           </Typography>
           <Button color="inherit" component={Link} to="/" startIcon={<Home />}>
-            캠페인 목록
-          </Button>
-          <Button
-            color="inherit"
-            component={Link}
-            to="/admin/campaigns"
-            startIcon={<AdminPanelSettings />}
-          >
-            관리자
+            사용자
           </Button>
         </Toolbar>
+        {isAdminPage && (
+          <Tabs
+            value={getAdminTabValue()}
+            textColor="inherit"
+            indicatorColor="secondary"
+            sx={{ bgcolor: 'primary.dark' }}
+          >
+            <Tab
+              label="캠페인 관리"
+              icon={<Campaign />}
+              iconPosition="start"
+              component={Link}
+              to="/admin/campaigns"
+            />
+            <Tab
+              label="통계"
+              icon={<BarChart />}
+              iconPosition="start"
+              component={Link}
+              to="/admin/stats"
+            />
+            <Tab
+              label="배치"
+              icon={<Schedule />}
+              iconPosition="start"
+              component={Link}
+              to="/admin/batch"
+            />
+          </Tabs>
+        )}
       </AppBar>
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4, flex: 1 }}>
         <Outlet />
