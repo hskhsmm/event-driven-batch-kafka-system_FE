@@ -9,7 +9,7 @@ import {
   Tabs,
   Tab,
 } from '@mui/material';
-import { Home, Campaign, BarChart, Schedule } from '@mui/icons-material';
+import { Home, Campaign, BarChart, Schedule, AdminPanelSettings } from '@mui/icons-material';
 
 const Layout = () => {
   const location = useLocation();
@@ -32,6 +32,14 @@ const Layout = () => {
           </Typography>
           <Button color="inherit" component={Link} to="/" startIcon={<Home />}>
             사용자
+          </Button>
+          <Button
+            color="inherit"
+            component={Link}
+            to="/admin/campaigns"
+            startIcon={<AdminPanelSettings />}
+          >
+            관리자
           </Button>
         </Toolbar>
         {isAdminPage && (

@@ -20,7 +20,7 @@ import {
   Chip,
 } from '@mui/material';
 import { Add } from '@mui/icons-material';
-import { Campaign, CreateCampaignRequest } from '../../types';
+import type { Campaign, CreateCampaignRequest } from '../../types/index';
 import { getCampaigns, createCampaign } from '../../api';
 import { format } from 'date-fns';
 

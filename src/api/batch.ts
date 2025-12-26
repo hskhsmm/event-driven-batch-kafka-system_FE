@@ -1,5 +1,5 @@
 import apiClient from './client';
-import { BatchStartResponse, BatchExecution, BatchHistoryResponse } from '../types';
+import type { BatchStartResponse, BatchExecution, BatchHistoryResponse } from '../types/index';
 
 // 배치 수동 실행
 export const executeBatch = async (date: string): Promise<BatchStartResponse> => {

@@ -18,7 +18,7 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { Search } from '@mui/icons-material';
-import { DailyStatsResponse } from '../../types';
+import type { DailyStatsResponse } from '../../types/index';
 import { getDailyStats } from '../../api';
 import { format } from 'date-fns';
 

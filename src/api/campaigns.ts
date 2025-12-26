@@ -1,5 +1,5 @@
 import apiClient from './client';
-import { Campaign, CreateCampaignRequest } from '../types';
+import type { Campaign, CreateCampaignRequest } from '../types/index';
 
 // 캠페인 목록 조회
 export const getCampaigns = async (): Promise<Campaign[]> => {

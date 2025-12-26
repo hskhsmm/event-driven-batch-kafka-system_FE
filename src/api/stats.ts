@@ -1,5 +1,5 @@
 import apiClient from './client';
-import { DailyStatsResponse, CampaignStatsResponse } from '../types';
+import type { DailyStatsResponse, CampaignStatsResponse } from '../types/index';
 
 // 일자별 전체 통계 조회
 export const getDailyStats = async (date: string): Promise<DailyStatsResponse> => {

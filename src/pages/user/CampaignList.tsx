@@ -16,7 +16,7 @@ import {
   DialogActions,
   LinearProgress,
 } from '@mui/material';
-import { Campaign } from '../../types';
+import type { Campaign } from '../../types/index';
 import { getCampaigns, participateCampaign } from '../../api';
 
 const CampaignList = () => {

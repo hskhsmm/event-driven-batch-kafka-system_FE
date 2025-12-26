@@ -16,7 +16,7 @@ import {
   Chip,
 } from '@mui/material';
 import { PlayArrow, Refresh } from '@mui/icons-material';
-import { BatchHistoryResponse } from '../../types';
+import type { BatchHistoryResponse } from '../../types/index';
 import { executeBatch, getBatchHistory } from '../../api';
 import { format } from 'date-fns';
 

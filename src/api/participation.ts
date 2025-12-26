@@ -1,5 +1,5 @@
 import apiClient from './client';
-import { ParticipationRequest } from '../types';
+import type { ParticipationRequest } from '../types/index';
 
 // 캠페인 참여
 export const participateCampaign = async (
