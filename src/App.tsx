@@ -18,6 +18,7 @@ function App() {
           <Route index element={<Navigate to="/admin/campaigns" replace />} />
           <Route path="campaigns" element={<CampaignManagement />} />
           <Route path="stats" element={<StatsDashboard />} />
+          <Route path="stats/detail" element={<CampaignDetailStats />} />
           <Route path="batch" element={<BatchManagement />} />
         </Route>
 
