@@ -17,7 +17,8 @@ import {
   Alert,
   CircularProgress,
 } from '@mui/material';
-import { Search } from '@mui/icons-material';
+import { Search, Timeline } from '@mui/icons-material';
+import { Link } from 'react-router-dom';
 import type { DailyStatsResponse } from '../../types/index';
 import { getDailyStats } from '../../api';
 import { format } from 'date-fns';
@@ -55,9 +56,19 @@ const StatsDashboard = () => {
 
   return (
     <Box>
-      <Typography variant="h4" gutterBottom>
-        통계 대시보드
-      </Typography>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+        <Typography variant="h4">
+          통계 대시보드
+        </Typography>
+        <Button
+          variant="outlined"
+          component={Link}
+          to="/admin/stats/detail"
+          startIcon={<Timeline />}
+        >
+          캠페인별 상세 통계
+        </Button>
+      </Box>
 
       {/* 날짜 선택 */}
       <Paper sx={{ p: 2, mb: 3 }}>
