@@ -3,6 +3,7 @@ import Layout from './components/Layout';
 import CampaignList from './pages/user/CampaignList';
 import CampaignManagement from './pages/admin/CampaignManagement';
 import StatsDashboard from './pages/admin/StatsDashboard';
+import CampaignDetailStats from './pages/admin/CampaignDetailStats';
 import BatchManagement from './pages/admin/BatchManagement';
 
 function App() {
