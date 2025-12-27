@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   Box,
+  Container,
   Typography,
   Button,
   Table,
@@ -23,8 +24,10 @@ import { Add } from '@mui/icons-material';
 import type { Campaign, CreateCampaignRequest } from '../../types/index';
 import { getCampaigns, createCampaign } from '../../api';
 import { format } from 'date-fns';
+import { useToast } from '../../components/ToastProvider';
 
 const CampaignManagement = () => {
+  const { showToast } = useToast();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -93,9 +96,12 @@ const CampaignManagement = () => {
       setFormError(null);
       await createCampaign(formData);
       setOpenDialog(false);
+      showToast('캠페인이 생성되었습니다.', 'success');
       loadCampaigns();
     } catch (err: any) {
-      setFormError(err.response?.data?.error || '캠페인 생성에 실패했습니다.');
+      const errorMsg = err.response?.data?.error || '캠페인 생성에 실패했습니다.';
+      setFormError(errorMsg);
+      showToast(errorMsg, 'error');
     } finally {
       setCreating(false);
     }
@@ -110,9 +116,9 @@ const CampaignManagement = () => {
   }
 
   return (
-    <Box>
+    <Container maxWidth="xl" sx={{ py: 6 }}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h4">캠페인 관리</Typography>
+        <Typography variant="h4" fontWeight={700}>캠페인 관리</Typography>
         <Button
           variant="contained"
           startIcon={<Add />}
@@ -210,7 +216,7 @@ const CampaignManagement = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </Container>
   );
 };
 

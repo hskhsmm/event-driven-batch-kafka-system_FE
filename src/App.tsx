@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
-import CampaignList from './pages/user/CampaignList';
+import LandingPage from './pages/user/LandingPage';
+import CampaignListPage from './pages/user/CampaignListPage';
 import CampaignManagement from './pages/admin/CampaignManagement';
 import StatsDashboard from './pages/admin/StatsDashboard';
 import CampaignDetailStats from './pages/admin/CampaignDetailStats';
@@ -11,7 +12,8 @@ function App() {
     <Routes>
       <Route path="/" element={<Layout />}>
         {/* 사용자 페이지 */}
-        <Route index element={<CampaignList />} />
+        <Route index element={<LandingPage />} />
+        <Route path="campaigns" element={<CampaignListPage />} />
 
         {/* 관리자 페이지 */}
         <Route path="admin">
