@@ -3,8 +3,8 @@ import type { Campaign, CreateCampaignRequest } from '../types/index';
 
 // 캠페인 목록 조회
 export const getCampaigns = async (): Promise<Campaign[]> => {
-  const response = await apiClient.get<Campaign[]>('/api/admin/campaigns');
-  return response.data;
+  const response = await apiClient.get<ApiResponse<Campaign[]>>('/api/admin/campaigns');
+  return response.data.data;
 };
 
 // 캠페인 생성

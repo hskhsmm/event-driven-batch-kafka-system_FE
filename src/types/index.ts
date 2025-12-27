@@ -1,3 +1,10 @@
+// 공용 ApiResponse
+export interface ApiResponse<T> {
+  success: boolean;
+  message: string;
+  data: T;
+}
+
 // Campaign (캠페인)
 export interface Campaign {
   id: number;
