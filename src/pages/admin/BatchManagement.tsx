@@ -1,32 +1,78 @@
-import { useState, useEffect } from 'react';
 import {
   Box,
+  Container,
   Typography,
+  Button,
   Paper,
   TextField,
-  Button,
+  Alert,
+  CircularProgress,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Alert,
-  CircularProgress,
   Chip,
 } from '@mui/material';
-import { PlayArrow, Refresh } from '@mui/icons-material';
-import type { BatchHistoryResponse } from '../../types/index';
-import { executeBatch, getBatchHistory } from '../../api';
-import { format } from 'date-fns';
+import { PlayArrow, Refresh, History } from '@mui/icons-material';
+import {
+  executeBatch,
+  getBatchStatus,
+  getBatchHistory,
+  simulateParticipation,
+} from '../../api';
+import type { BatchExecution, BatchHistoryResponse } from '../../types';
+import { ApiError } from '../../api/error';
+import { useToast } from '../../components/ToastProvider';
 
 const BatchManagement = () => {
-  const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
-  const [history, setHistory] = useState<BatchHistoryResponse | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [executing, setExecuting] = useState(false);
+  const { showToast } = useToast();
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [runningJob, setRunningJob] = useState<BatchExecution | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [history, setHistory] = useState<BatchHistoryResponse | null>(null);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+
+  // 부하 테스트 상태
+  const [simCampaignId, setSimCampaignId] = useState('');
+  const [simCount, setSimCount] = useState('');
+  const [isSimulating, setIsSimulating] = useState(false);
+  const [simError, setSimError] = useState<string | null>(null);
+
+  // 부하 테스트 핸들러
+  const handleSimulate = async () => {
+    const campaignIdNum = parseInt(simCampaignId, 10);
+    const countNum = parseInt(simCount, 10);
+
+    if (isNaN(campaignIdNum) || campaignIdNum <= 0) {
+      setSimError('유효한 캠페인 ID를 입력하세요.');
+      return;
+    }
+    if (isNaN(countNum) || countNum <= 0 || countNum > 100000) {
+      setSimError('요청 횟수는 1 이상 100,000 이하로 입력하세요.');
+      return;
+    }
+
+    setIsSimulating(true);
+    setSimError(null);
+    try {
+      const message = await simulateParticipation(campaignIdNum, countNum);
+      showToast(message, 'success');
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setSimError(err.message);
+        showToast(err.message, 'error');
+      } else {
+        const fallbackMsg = '알 수 없는 오류가 발생했습니다.';
+        setSimError(fallbackMsg);
+        showToast(fallbackMsg, 'error');
+      }
+    } finally {
+      setIsSimulating(false);
+    }
+  };
 
   // 배치 이력 로드
   const loadHistory = async () => {
@@ -117,6 +163,50 @@ const BatchManagement = () => {
           </Button>
         </Box>
         <Alert severity="info">매일 새벽 2시 자동 실행됩니다.</Alert>
+      </Paper>
+
+      {/* 부하 테스트 */}
+      <Paper sx={{ p: 3, mb: 3 }}>
+        <Typography variant="h6" gutterBottom>
+          부하 테스트 시뮬레이터
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          지정된 횟수만큼 참여 요청을 Kafka에 직접 발행하여 부하를 시뮬레이션합니다.
+        </Typography>
+        {simError && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {simError}
+          </Alert>
+        )}
+        <Box display="flex" alignItems="flex-start" gap={2}>
+          <TextField
+            label="캠페인 ID"
+            variant="outlined"
+            size="small"
+            value={simCampaignId}
+            onChange={(e) => setSimCampaignId(e.target.value)}
+            sx={{ width: '150px' }}
+          />
+          <TextField
+            label="요청 횟수 (최대 100,000)"
+            variant="outlined"
+            size="small"
+            type="number"
+            value={simCount}
+            onChange={(e) => setSimCount(e.target.value)}
+            sx={{ flexGrow: 1 }}
+          />
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={handleSimulate}
+            disabled={isSimulating}
+            startIcon={isSimulating ? <CircularProgress size={20} color="inherit" /> : <PlayArrow />}
+            sx={{ height: '40px' }}
+          >
+            {isSimulating ? '실행 중...' : '시뮬레이션 시작'}
+          </Button>
+        </Box>
       </Paper>
 
       {error && (
