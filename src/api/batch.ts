@@ -38,9 +38,9 @@ export const simulateParticipation = async (
   campaignId: number,
   count: number
 ): Promise<string> => {
-  const response = await apiClient.post<string>(
+  const response = await apiClient.post<ApiResponse<any>>(
     '/api/admin/test/participate-bulk',
     { campaignId, count }
   );
-  return response.data; // The API returns a raw string message in the body
+  return response.data.message;
 };

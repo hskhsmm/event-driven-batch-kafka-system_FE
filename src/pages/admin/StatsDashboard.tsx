@@ -45,6 +45,9 @@ const StatsDashboard = () => {
       setLoading(true);
       setError(null);
       const data = await getDailyStats(date);
+      console.log('StatsDashboard - 받은 데이터:', data);
+      console.log('StatsDashboard - summary:', data?.summary);
+      console.log('StatsDashboard - campaigns:', data?.campaigns);
       setStats(data);
     } catch (err: any) {
       setError(err.response?.data?.error || '통계를 불러오는데 실패했습니다.');
@@ -182,7 +185,7 @@ const StatsDashboard = () => {
           )}
 
           {/* 캠페인별 상세 */}
-          {stats.campaigns.length > 0 && (
+          {stats.campaigns && stats.campaigns.length > 0 && (
             <Paper sx={{ p: 3 }}>
               <Typography variant="h6" gutterBottom>
                 캠페인별 상세
