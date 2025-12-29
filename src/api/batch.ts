@@ -32,3 +32,15 @@ export const getBatchHistory = async (
   );
   return response.data.data;
 };
+
+// 참여 요청 시뮬레이션 (부하 테스트)
+export const simulateParticipation = async (
+  campaignId: number,
+  count: number
+): Promise<string> => {
+  const response = await apiClient.post<string>(
+    '/api/admin/test/participate-bulk',
+    { campaignId, count }
+  );
+  return response.data; // The API returns a raw string message in the body
+};
