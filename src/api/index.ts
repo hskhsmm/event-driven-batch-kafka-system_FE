@@ -5,7 +5,12 @@ export { getCampaigns, createCampaign } from './campaigns';
 export { participateCampaign } from './participation';
 
 // Batch APIs
-export { executeBatch, getBatchStatus, getBatchHistory } from './batch';
+export {
+  executeBatch,
+  getBatchStatus,
+  getBatchHistory,
+  simulateParticipation,
+} from './batch';
 
 // Stats APIs
 export { getDailyStats, getCampaignStats } from './stats';
