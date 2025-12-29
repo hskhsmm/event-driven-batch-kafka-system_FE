@@ -24,6 +24,7 @@ import { Add } from '@mui/icons-material';
 import type { Campaign, CreateCampaignRequest } from '../../types/index';
 import { getCampaigns, createCampaign } from '../../api';
 import { format } from 'date-fns';
+import { ApiError } from '../../api/error';
 import { useToast } from '../../components/ToastProvider';
 
 const CampaignManagement = () => {
@@ -47,7 +48,12 @@ const CampaignManagement = () => {
       setCampaigns(data);
       setError(null);
     } catch (err) {
-      setError('캠페인 목록을 불러오는데 실패했습니다.');
+      let message = '캠페인 목록을 불러오는데 실패했습니다.';
+      if (err instanceof ApiError) {
+        message = err.message; // 서버가 제공하는 기본 메시지 사용
+      }
+      setError(message);
+      showToast(message, 'error');
       console.error(err);
     } finally {
       setLoading(false);
@@ -98,10 +104,21 @@ const CampaignManagement = () => {
       setOpenDialog(false);
       showToast('캠페인이 생성되었습니다.', 'success');
       loadCampaigns();
-    } catch (err: any) {
-      const errorMsg = err.response?.data?.error || '캠페인 생성에 실패했습니다.';
-      setFormError(errorMsg);
-      showToast(errorMsg, 'error');
+    } catch (err) {
+      let message = '캠페인 생성에 실패했습니다.';
+      if (err instanceof ApiError) {
+        // errorCode에 따라 사용자 친화적인 메시지로 분기 처리
+        switch (err.errorCode) {
+          case 'COMMON_002': // 검증 실패
+            message = `입력값을 확인해주세요: ${err.message}`;
+            break;
+          default:
+            message = err.message; // 그 외 API 에러는 서버 메시지 그대로 사용
+            break;
+        }
+      }
+      setFormError(message);
+      showToast(message, 'error');
     } finally {
       setCreating(false);
     }
