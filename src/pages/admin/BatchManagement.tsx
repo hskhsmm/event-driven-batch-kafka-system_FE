@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import {
   Box,
   Container,
@@ -29,8 +30,10 @@ import { useToast } from '../../components/ToastProvider';
 const BatchManagement = () => {
   const { showToast } = useToast();
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [executing, setExecuting] = useState(false);
   const [runningJob, setRunningJob] = useState<BatchExecution | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState<BatchHistoryResponse | null>(null);
   const [loadingHistory, setLoadingHistory] = useState(false);
@@ -103,8 +106,13 @@ const BatchManagement = () => {
       );
       // 이력 새로고침
       setTimeout(loadHistory, 2000);
-    } catch (err: any) {
-      setError(err.response?.data?.error || '배치 실행에 실패했습니다.');
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setError(err.message);
+      } else {
+        setError('알 수 없는 오류가 발생했습니다.');
+      }
+      console.error(err);
     } finally {
       setExecuting(false);
     }
