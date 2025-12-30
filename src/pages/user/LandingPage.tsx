@@ -5,7 +5,7 @@ import {
   Container,
   Typography,
   Button,
-  Grid,
+  GridLegacy as Grid,
   Card,
   CardContent,
   CardActions,
@@ -162,7 +162,7 @@ const LandingPage = () => {
       >
         <Container maxWidth="lg">
           <Grid container spacing={6}>
-            <Grid item xs={12} md={4}>
+            <Grid item size={{ xs: 12, md: 4 }}>
               <Box
                 sx={{
                   textAlign: 'center',
@@ -184,7 +184,7 @@ const LandingPage = () => {
                 </Typography>
               </Box>
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid item size={{ xs: 12, md: 4 }}>
               <Box
                 sx={{
                   textAlign: 'center',
@@ -199,6 +199,7 @@ const LandingPage = () => {
                 <Typography variant="h5" gutterBottom fontWeight={700}>
                   정확한 관리
                 </Typography>
+.
                 <Typography color="text.secondary" sx={{ lineHeight: 1.8 }}>
                   중복 참여 방지 및
                   <br />
@@ -206,7 +207,7 @@ const LandingPage = () => {
                 </Typography>
               </Box>
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid item size={{ xs: 12, md: 4 }}>
               <Box
                 sx={{
                   textAlign: 'center',
@@ -254,7 +255,7 @@ const LandingPage = () => {
           <Grid container spacing={4}>
             {loading
               ? [1, 2, 3].map((n) => (
-                  <Grid item xs={12} md={4} key={n}>
+                  <Grid item size={{ xs: 12, md: 4 }} key={n}>
                     <Card>
                       <CardContent>
                         <Skeleton variant="text" height={40} />
@@ -269,7 +270,7 @@ const LandingPage = () => {
                   const isOpen = campaign.status === 'OPEN' && campaign.currentStock > 0;
 
                   return (
-                    <Grid item xs={12} md={4} key={campaign.id}>
+                    <Grid item size={{ xs: 12, md: 4 }} key={campaign.id}>
                       <Card
                         sx={{
                           height: '100%',
