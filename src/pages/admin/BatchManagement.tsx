@@ -20,10 +20,9 @@ import {
 import { PlayArrow, Refresh, History } from '@mui/icons-material';
 import {
   executeBatch,
-  getBatchStatus,
   getBatchHistory,
   simulateParticipation,
-  getDailyStats,
+  getDailyPerformanceStats,
   getCampaigns,
 } from '../../api';
 import type { BatchExecution, BatchHistoryResponse } from '../../types';
@@ -176,7 +175,7 @@ const BatchManagement = () => {
 
       // 시작 전 통계 조회
       const today = format(new Date(), 'yyyy-MM-dd');
-      const initialStats = await getDailyStats(today).catch(() => null);
+      const initialStats = await getDailyPerformanceStats(today).catch(() => null);
       const campaignStats = initialStats?.campaigns?.find(c => c.campaignId === campaignIdNum);
       const initialSuccess = campaignStats?.successCount || 0;
       const initialFail = campaignStats?.failCount || 0;

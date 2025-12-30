@@ -129,3 +129,46 @@ export interface BatchHistoryResponse {
     updatedRows: string;
   }>;
 }
+
+// --- 2025-12-30 추가된 타입 ---
+
+// 실시간 캠페인 현황 (GET /api/campaigns/{id}/status)
+export interface CampaignRealtimeStatus {
+  campaignId: number;
+  campaignName: string;
+  totalStock: number;
+  currentStock: number;
+  successCount: number;
+  failCount: number;
+  totalParticipation: number;
+  stockUsageRate: string;
+}
+
+// 성능 비교용 통계 데이터 (공용 구조)
+export interface PerformanceStats {
+  date: string;
+  method: 'RAW_QUERY' | 'BATCH_AGGREGATED';
+  queryTimeMs: number;
+  summary: {
+    totalCampaigns: number;
+    totalSuccess: number;
+    totalFail: number;
+    totalParticipation: number;
+    overallSuccessRate: string;
+  };
+  campaigns: Array<{
+    campaignId: number;
+    campaignName: string;
+    successCount: number;
+    failCount: number;
+    totalCount: number;
+    successRate: string;
+    statsDate?: string; // BATCH_AGGREGATED 에만 존재
+  }>;
+}
+
+// 동기 방식 참여 응답 (POST /api/campaigns/{campaignId}/participation-sync)
+export interface SyncParticipationResponse {
+  status: 'SUCCESS' | 'FAIL';
+  method: 'SYNC';
+}

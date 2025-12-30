@@ -1,10 +1,18 @@
 import apiClient from './client';
-import type { DailyStatsResponse, CampaignStatsResponse, ApiResponse } from '../types/index';
+import type { PerformanceStats, CampaignStatsResponse, ApiResponse } from '../types/index';
 
-// 일자별 전체 통계 조회
-export const getDailyStats = async (date: string): Promise<DailyStatsResponse> => {
-  const response = await apiClient.get<ApiResponse<DailyStatsResponse>>(
+// 일자별 배치 집계 통계 조회 (빠른 API)
+export const getDailyPerformanceStats = async (date: string): Promise<PerformanceStats> => {
+  const response = await apiClient.get<ApiResponse<PerformanceStats>>(
     `/api/admin/stats/daily?date=${date}`
+  );
+  return response.data.data;
+};
+
+// 일자별 원본 데이터 집계 통계 조회 (느린 API)
+export const getRawPerformanceStats = async (date: string): Promise<PerformanceStats> => {
+  const response = await apiClient.get<ApiResponse<PerformanceStats>>(
+    `/api/admin/stats/raw?date=${date}`
   );
   return response.data.data;
 };

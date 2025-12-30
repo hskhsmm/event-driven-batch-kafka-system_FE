@@ -9,7 +9,7 @@ import {
   Tabs,
   Tab,
 } from '@mui/material';
-import { Home, Campaign, BarChart, Schedule, AdminPanelSettings } from '@mui/icons-material';
+import { Campaign, BarChart, Schedule, Science } from '@mui/icons-material';
 
 const Layout = () => {
   const location = useLocation();
@@ -17,10 +17,11 @@ const Layout = () => {
 
   // 관리자 페이지 탭 값
   const getAdminTabValue = () => {
-    if (location.pathname === '/admin/campaigns') return 0;
-    if (location.pathname === '/admin/stats') return 1;
-    if (location.pathname === '/admin/batch') return 2;
-    return 0;
+    if (location.pathname.startsWith('/admin/campaigns')) return 0;
+    if (location.pathname.startsWith('/admin/dashboard')) return 1;
+    if (location.pathname.startsWith('/admin/batch')) return 2;
+    if (location.pathname.startsWith('/admin/performance')) return 3;
+    return 0; // 기본값
   };
 
   return (
@@ -115,30 +116,39 @@ const Layout = () => {
                 to="/admin/campaigns"
               />
               <Tab
-                label="통계"
+                label="통계 대시보드"
                 icon={<BarChart />}
                 iconPosition="start"
                 component={Link}
-                to="/admin/stats"
+                to="/admin/dashboard"
               />
               <Tab
-                label="배치"
+                label="배치 관리"
                 icon={<Schedule />}
                 iconPosition="start"
                 component={Link}
                 to="/admin/batch"
               />
+              <Tab
+                label="성능 테스트"
+                icon={<Science />}
+                iconPosition="start"
+                component={Link}
+                to="/admin/performance"
+              />
             </Tabs>
           </Box>
         )}
       </AppBar>
-      <Box sx={{ flex: 1 }}>
-        <Outlet />
+      <Box sx={{ flex: 1, p: 4 }}>
+        <Container maxWidth="lg">
+           <Outlet />
+        </Container>
       </Box>
       <Box
         component="footer"
         sx={{
-          py: 6,
+          py: 3,
           px: 2,
           mt: 'auto',
           bgcolor: '#fafafa',

@@ -130,7 +130,7 @@ const CampaignListPage = () => {
         >
           <Box sx={{ textAlign: 'center' }}>
             <Typography variant="h4" fontWeight="bold" color="primary">
-              {campaigns.filter((c) => c.status === 'OPEN').length}
+              {campaigns.filter((c) => c.status === 'OPEN' && c.currentStock > 0).length}
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
               진행 중
@@ -139,7 +139,7 @@ const CampaignListPage = () => {
           <Box sx={{ width: 1, height: 40, bgcolor: 'divider' }} />
           <Box sx={{ textAlign: 'center' }}>
             <Typography variant="h4" fontWeight="bold" color="text.secondary">
-              {campaigns.filter((c) => c.status === 'CLOSED').length}
+              {campaigns.filter((c) => c.status === 'CLOSED' || c.currentStock === 0).length}
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
               마감
@@ -179,7 +179,7 @@ const CampaignListPage = () => {
                     color={isOpen ? 'success.main' : 'text.secondary'}
                     sx={{ mb: 3, fontWeight: 600 }}
                   >
-                    {campaign.status === 'OPEN' ? '진행 중' : '마감'}
+                    {isOpen ? '진행 중' : '마감'}
                   </Typography>
                   <Typography variant="h6" gutterBottom fontWeight={600}>
                     {campaign.currentStock.toLocaleString()} / {campaign.totalStock.toLocaleString()}

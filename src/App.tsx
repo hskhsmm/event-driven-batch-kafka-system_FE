@@ -6,6 +6,7 @@ import CampaignManagement from './pages/admin/CampaignManagement';
 import StatsDashboard from './pages/admin/StatsDashboard';
 import CampaignDetailStats from './pages/admin/CampaignDetailStats';
 import BatchManagement from './pages/admin/BatchManagement';
+import PerformanceTest from './pages/admin/PerformanceTest';
 
 function App() {
   return (
@@ -19,9 +20,10 @@ function App() {
         <Route path="admin">
           <Route index element={<Navigate to="/admin/campaigns" replace />} />
           <Route path="campaigns" element={<CampaignManagement />} />
-          <Route path="stats" element={<StatsDashboard />} />
-          <Route path="stats/detail" element={<CampaignDetailStats />} />
+          <Route path="campaigns/:id" element={<CampaignDetailStats />} />
+          <Route path="dashboard" element={<StatsDashboard />} />
           <Route path="batch" element={<BatchManagement />} />
+          <Route path="performance" element={<PerformanceTest />} />
         </Route>
 
         {/* 404 */}

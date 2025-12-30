@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Box,
   Typography,
@@ -17,10 +17,16 @@ import {
   CircularProgress,
   Card,
   CardContent,
+  LinearProgress,
+  Divider,
 } from '@mui/material';
-import { Search } from '@mui/icons-material';
-import type { Campaign, CampaignStatsResponse } from '../../types/index';
-import { getCampaigns, getCampaignStats } from '../../api';
+import { Search, FlashOn } from '@mui/icons-material';
+import type {
+  Campaign,
+  CampaignStatsResponse,
+  CampaignRealtimeStatus,
+} from '../../types/index';
+import { getCampaigns, getCampaignStats, getCampaignRealtimeStatus } from '../../api';
 import { format, subDays } from 'date-fns';
 import {
   LineChart,
@@ -35,6 +41,104 @@ import {
   Area,
 } from 'recharts';
 
+// --- 실시간 모니터링 컴포넌트 ---
+const RealtimeMonitor = ({ campaignId }: { campaignId: number }) => {
+  const [status, setStatus] = useState<CampaignRealtimeStatus | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [tps, setTps] = useState(0); // Transactions Per Second
+  const prevTotalParticipation = useRef(0);
+
+  useEffect(() => {
+    if (!campaignId) return;
+
+    const fetchStatus = async () => {
+      try {
+        const data = await getCampaignRealtimeStatus(campaignId);
+        setStatus(data);
+        
+        // TPS 계산
+        const currentTotal = data.totalParticipation;
+        setTps(currentTotal - prevTotalParticipation.current);
+        prevTotalParticipation.current = currentTotal;
+
+        setError(null);
+      } catch (err: any) {
+        setError(err.response?.data?.message || '실시간 데이터를 불러오는 데 실패했습니다.');
+      }
+    };
+
+    fetchStatus(); // 초기 즉시 호출
+    const interval = setInterval(fetchStatus, 1000);
+
+    return () => clearInterval(interval);
+  }, [campaignId]);
+
+  if (error) {
+    return <Alert severity="error">{error}</Alert>;
+  }
+
+  if (!status) {
+    return <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}><CircularProgress size={30} /></Box>;
+  }
+
+  const stockUsagePercent = parseFloat(status.stockUsageRate.replace('%', ''));
+
+  return (
+    <Paper sx={{ p: 3, mb: 4, border: '1px solid', borderColor: 'primary.main' }}>
+      <Typography variant="h5" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
+        <FlashOn sx={{ mr: 1, color: 'primary.main' }} />
+        실시간 모니터링: {status.campaignName}
+      </Typography>
+      <Grid container spacing={2} alignItems="center">
+        <Grid item xs={12} md={6}>
+          <Typography variant="h6">재고 현황</Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+            <Box sx={{ width: '100%', mr: 1 }}>
+              <LinearProgress variant="determinate" value={stockUsagePercent} sx={{ height: 12, borderRadius: 5 }} />
+            </Box>
+            <Box sx={{ minWidth: 35 }}>
+              <Typography variant="body2" color="text.secondary">{`${stockUsagePercent.toFixed(2)}%`}</Typography>
+            </Box>
+          </Box>
+          <Typography variant="subtitle1" color="text.secondary" sx={{ mt: 1 }}>
+            {status.currentStock.toLocaleString()} / {status.totalStock.toLocaleString()}개 남음
+          </Typography>
+        </Grid>
+        <Grid item xs={12} md={6}>
+            <Grid container spacing={2}>
+              <Grid item xs={4}>
+                <Card sx={{ textAlign: 'center', bgcolor: 'success.light' }}>
+                  <CardContent>
+                    <Typography color="text.secondary">성공</Typography>
+                    <Typography variant="h6">{status.successCount.toLocaleString()}</Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+              <Grid item xs={4}>
+                <Card sx={{ textAlign: 'center', bgcolor: 'error.light' }}>
+                  <CardContent>
+                    <Typography color="text.secondary">실패</Typography>
+                    <Typography variant="h6">{status.failCount.toLocaleString()}</Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+              <Grid item xs={4}>
+                 <Card sx={{ textAlign: 'center' }}>
+                  <CardContent>
+                    <Typography color="text.secondary">처리율(TPS)</Typography>
+                    <Typography variant="h6">{tps.toLocaleString()}</Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+            </Grid>
+        </Grid>
+      </Grid>
+    </Paper>
+  );
+};
+
+
+// --- 기존 통계 페이지 ---
 const CampaignDetailStats = () => {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [selectedCampaignId, setSelectedCampaignId] = useState<number | null>(null);
@@ -44,7 +148,6 @@ const CampaignDetailStats = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // 캠페인 목록 로드
   useEffect(() => {
     const loadCampaigns = async () => {
       try {
@@ -60,10 +163,8 @@ const CampaignDetailStats = () => {
     loadCampaigns();
   }, []);
 
-  // 통계 조회
   const handleSearch = async () => {
     if (!selectedCampaignId) return;
-
     try {
       setLoading(true);
       setError(null);
@@ -80,11 +181,20 @@ const CampaignDetailStats = () => {
   return (
     <Box>
       <Typography variant="h4" gutterBottom>
-        캠페인별 상세 통계
+        캠페인 성과 분석
+      </Typography>
+
+      {/* 실시간 모니터링 섹션 */}
+      {selectedCampaignId && <RealtimeMonitor campaignId={selectedCampaignId} />}
+
+      <Divider sx={{ my: 4 }} />
+      
+      <Typography variant="h5" gutterBottom>
+       기간별 상세 통계
       </Typography>
 
       {/* 검색 조건 */}
-      <Paper sx={{ p: 2, mb: 3 }}>
+      <Paper sx={{ p: 2, mb: 3, mt: 2 }}>
         <Grid container spacing={2} alignItems="center">
           <Grid item xs={12} sm={4}>
             <TextField
@@ -331,7 +441,7 @@ const CampaignDetailStats = () => {
         </>
       )}
 
-      {!stats && !loading && (
+      {!stats && !loading && !selectedCampaignId && (
         <Alert severity="info">캠페인과 기간을 선택하고 조회 버튼을 클릭하세요.</Alert>
       )}
     </Box>

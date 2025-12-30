@@ -173,8 +173,8 @@ const CampaignManagement = () => {
                 </TableCell>
                 <TableCell>
                   <Chip
-                    label={campaign.status === 'OPEN' ? '진행 중' : '마감'}
-                    color={campaign.status === 'OPEN' ? 'success' : 'default'}
+                    label={(campaign.status === 'OPEN' && campaign.currentStock > 0) ? '진행 중' : '마감'}
+                    color={(campaign.status === 'OPEN' && campaign.currentStock > 0) ? 'success' : 'default'}
                     size="small"
                   />
                 </TableCell>

@@ -1,5 +1,10 @@
 // Campaign APIs
-export { getCampaigns, createCampaign } from './campaigns';
+export {
+  getCampaigns,
+  createCampaign,
+  getCampaignRealtimeStatus,
+  participateSync,
+} from './campaigns';
 
 // Participation APIs
 export { participateCampaign } from './participation';
@@ -13,4 +18,8 @@ export {
 } from './batch';
 
 // Stats APIs
-export { getDailyStats, getCampaignStats } from './stats';
+export {
+  getDailyPerformanceStats,
+  getRawPerformanceStats,
+  getCampaignStats,
+} from './stats';
