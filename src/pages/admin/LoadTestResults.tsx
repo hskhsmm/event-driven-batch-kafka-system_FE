@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box,
   Container,
@@ -13,9 +13,11 @@ import {
   TextField,
   Switch,
   FormControlLabel,
+  LinearProgress,
+  Chip,
 } from '@mui/material';
-import { PlayArrow } from '@mui/icons-material';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { PlayArrow, Speed, Timer } from '@mui/icons-material';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
 import {
   executeKafkaTest,
   executeSyncTest,
@@ -36,6 +38,12 @@ const LoadTestResults = () => {
 
   const [kafkaLoading, setKafkaLoading] = useState(false);
   const [syncLoading, setSyncLoading] = useState(false);
+
+  // 실시간 진행률 추적
+  const [kafkaProgress, setKafkaProgress] = useState(0);
+  const [syncProgress, setSyncProgress] = useState(0);
+  const [kafkaStartTime, setKafkaStartTime] = useState<number | null>(null);
+  const [syncStartTime, setSyncStartTime] = useState<number | null>(null);
 
   // 수동 모드: JSON 파일 로드
   const loadManualResults = async () => {
@@ -73,6 +81,8 @@ const LoadTestResults = () => {
   const handleKafkaTest = async () => {
     try {
       setKafkaLoading(true);
+      setKafkaProgress(0);
+      setKafkaStartTime(Date.now());
       showToast('Kafka 부하 테스트를 시작합니다...', 'info');
 
       const { jobId } = await executeKafkaTest({
@@ -81,11 +91,12 @@ const LoadTestResults = () => {
         duration: 5,
       });
 
-      pollTestResult(jobId, setKafkaResult, setKafkaLoading);
+      pollTestResult(jobId, setKafkaResult, setKafkaLoading, setKafkaProgress);
 
     } catch (error) {
       showToast('백엔드 API가 아직 준비되지 않았습니다. 수동 모드를 사용하세요.', 'warning');
       setKafkaLoading(false);
+      setKafkaProgress(0);
     }
   };
 
@@ -93,6 +104,8 @@ const LoadTestResults = () => {
   const handleSyncTest = async () => {
     try {
       setSyncLoading(true);
+      setSyncProgress(0);
+      setSyncStartTime(Date.now());
       showToast('동기 방식 부하 테스트를 시작합니다...', 'info');
 
       const { jobId } = await executeSyncTest({
@@ -101,11 +114,12 @@ const LoadTestResults = () => {
         duration: 5,
       });
 
-      pollTestResult(jobId, setSyncResult, setSyncLoading);
+      pollTestResult(jobId, setSyncResult, setSyncLoading, setSyncProgress);
 
     } catch (error) {
       showToast('백엔드 API가 아직 준비되지 않았습니다. 수동 모드를 사용하세요.', 'warning');
       setSyncLoading(false);
+      setSyncProgress(0);
     }
   };
 
@@ -113,8 +127,13 @@ const LoadTestResults = () => {
   const pollTestResult = (
     jobId: string,
     setResult: (result: LoadTestResult) => void,
-    setLoading: (loading: boolean) => void
+    setLoading: (loading: boolean) => void,
+    setProgress: (progress: number) => void
   ) => {
+    let retryCount = 0;
+    const maxRetries = 60; // 2초 * 60 = 120초
+    const estimatedDuration = 10000; // K6 테스트는 약 10초 예상 (5초 실행 + 오버헤드)
+
     const interval = setInterval(async () => {
       try {
         const result = await getLoadTestResult(jobId);
@@ -123,19 +142,33 @@ const LoadTestResults = () => {
           clearInterval(interval);
           setResult(result);
           setLoading(false);
+          setProgress(100);
           showToast('테스트가 완료되었습니다!', 'success');
         } else if (result.status === 'FAILED') {
           clearInterval(interval);
           setLoading(false);
+          setProgress(0);
           showToast('테스트 실패: ' + result.error, 'error');
+        } else {
+          // RUNNING: 진행률 업데이트 (추정)
+          const elapsed = retryCount * 2000; // 2초마다 폴링
+          const progress = Math.min((elapsed / estimatedDuration) * 100, 95); // 최대 95%까지
+          setProgress(progress);
         }
       } catch (error) {
-        clearInterval(interval);
-        setLoading(false);
-      }
-    }, 2000);
+        retryCount++;
+        console.warn(`폴링 에러 (${retryCount}/${maxRetries}):`, error);
 
-    setTimeout(() => clearInterval(interval), 120000);
+        // 최대 재시도 횟수 초과 시에만 중단
+        if (retryCount >= maxRetries) {
+          clearInterval(interval);
+          setLoading(false);
+          setProgress(0);
+          showToast('테스트 결과 조회 타임아웃', 'error');
+        }
+      }
+      retryCount++;
+    }, 2000);
   };
 
   // 비교 차트 데이터
@@ -207,7 +240,7 @@ const LoadTestResults = () => {
                   variant="contained"
                   startIcon={kafkaLoading ? <CircularProgress size={20} /> : <PlayArrow />}
                   onClick={handleKafkaTest}
-                  disabled={kafkaLoading}
+                  disabled={kafkaLoading || syncLoading}
                   fullWidth
                 >
                   Kafka
@@ -217,7 +250,7 @@ const LoadTestResults = () => {
                   color="secondary"
                   startIcon={syncLoading ? <CircularProgress size={20} /> : <PlayArrow />}
                   onClick={handleSyncTest}
-                  disabled={syncLoading}
+                  disabled={kafkaLoading || syncLoading}
                   fullWidth
                 >
                   동기
@@ -233,6 +266,38 @@ const LoadTestResults = () => {
               </Button>
             )}
           </Grid>
+
+          {/* 실시간 진행률 표시 */}
+          {useAutoMode && (kafkaLoading || syncLoading) && (
+            <Grid item xs={12}>
+              <Box sx={{ mt: 2 }}>
+                {kafkaLoading && (
+                  <Box sx={{ mb: 2 }}>
+                    <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
+                      <Typography variant="body2" color="primary" fontWeight="bold">
+                        <Speed fontSize="small" sx={{ verticalAlign: 'middle', mr: 0.5 }} />
+                        Kafka 테스트 실행 중...
+                      </Typography>
+                      <Chip label={`${Math.round(kafkaProgress)}%`} color="primary" size="small" />
+                    </Box>
+                    <LinearProgress variant="determinate" value={kafkaProgress} />
+                  </Box>
+                )}
+                {syncLoading && (
+                  <Box>
+                    <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
+                      <Typography variant="body2" color="secondary" fontWeight="bold">
+                        <Timer fontSize="small" sx={{ verticalAlign: 'middle', mr: 0.5 }} />
+                        동기 테스트 실행 중...
+                      </Typography>
+                      <Chip label={`${Math.round(syncProgress)}%`} color="secondary" size="small" />
+                    </Box>
+                    <LinearProgress variant="determinate" value={syncProgress} color="secondary" />
+                  </Box>
+                )}
+              </Box>
+            </Grid>
+          )}
         </Grid>
       </Paper>
 
@@ -293,23 +358,73 @@ const LoadTestResults = () => {
   );
 };
 
+// 숫자 애니메이션 컴포넌트
+const AnimatedNumber = ({ value, decimals = 2, suffix = '' }: { value: number; decimals?: number; suffix?: string }) => {
+  const [displayValue, setDisplayValue] = useState(0);
+
+  useEffect(() => {
+    const duration = 1000; // 1초
+    const steps = 60;
+    const stepValue = value / steps;
+    let current = 0;
+
+    const timer = setInterval(() => {
+      current += stepValue;
+      if (current >= value) {
+        setDisplayValue(value);
+        clearInterval(timer);
+      } else {
+        setDisplayValue(current);
+      }
+    }, duration / steps);
+
+    return () => clearInterval(timer);
+  }, [value]);
+
+  return <span>{displayValue.toFixed(decimals)}{suffix}</span>;
+};
+
 // 메트릭 카드 컴포넌트
-const MetricCard = ({ result }: { result: LoadTestResult }) => (
-  <Box>
-    <Typography variant="body2" color="text.secondary">응답 시간</Typography>
-    <Typography>평균: {(result.metrics?.avg ?? 0).toFixed(2)}ms</Typography>
-    <Typography>P50: {(result.metrics?.p50 ?? 0).toFixed(2)}ms</Typography>
-    <Typography>P95: {(result.metrics?.p95 ?? 0).toFixed(2)}ms</Typography>
-    <Typography>P99: {(result.metrics?.p99 ?? 0).toFixed(2)}ms</Typography>
-    <Typography>최대: {(result.metrics?.max ?? 0).toFixed(2)}ms</Typography>
+const MetricCard = ({ result }: { result: LoadTestResult }) => {
+  const [show, setShow] = useState(false);
 
-    <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>처리량</Typography>
-    <Typography>총 요청: {result.metrics?.totalRequests ?? 0}</Typography>
-    <Typography>TPS: {(result.metrics?.throughput ?? 0).toFixed(2)} req/s</Typography>
+  useEffect(() => {
+    setShow(true);
+  }, []);
 
-    <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>실패율</Typography>
-    <Typography>{((result.metrics?.failureRate ?? 0) * 100).toFixed(2)}%</Typography>
-  </Box>
-);
+  return (
+    <Box sx={{ opacity: show ? 1 : 0, transition: 'opacity 0.5s' }}>
+      <Typography variant="body2" color="text.secondary">응답 시간</Typography>
+      <Typography>
+        평균: <AnimatedNumber value={result.metrics?.avg ?? 0} />ms
+      </Typography>
+      <Typography>
+        P50: <AnimatedNumber value={result.metrics?.p50 ?? 0} />ms
+      </Typography>
+      <Typography>
+        P95: <AnimatedNumber value={result.metrics?.p95 ?? 0} />ms
+      </Typography>
+      <Typography>
+        P99: <AnimatedNumber value={result.metrics?.p99 ?? 0} />ms
+      </Typography>
+      <Typography>
+        최대: <AnimatedNumber value={result.metrics?.max ?? 0} />ms
+      </Typography>
+
+      <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>처리량</Typography>
+      <Typography>
+        총 요청: <AnimatedNumber value={result.metrics?.totalRequests ?? 0} decimals={0} />
+      </Typography>
+      <Typography>
+        TPS: <AnimatedNumber value={result.metrics?.throughput ?? 0} suffix=" req/s" />
+      </Typography>
+
+      <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>실패율</Typography>
+      <Typography>
+        <AnimatedNumber value={(result.metrics?.failureRate ?? 0) * 100} suffix="%" />
+      </Typography>
+    </Box>
+  );
+};
 
 export default LoadTestResults;
