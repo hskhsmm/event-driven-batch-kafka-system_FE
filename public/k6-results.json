@@ -1,0 +1,30 @@
+{
+  "kafka": {
+    "method": "KAFKA",
+    "metrics": {
+      "p50": 45.2,
+      "p95": 120.5,
+      "p99": 180.3,
+      "avg": 52.1,
+      "max": 250.0,
+      "min": 15.2,
+      "totalRequests": 500,
+      "throughput": 100.5,
+      "failureRate": 0.02
+    }
+  },
+  "sync": {
+    "method": "SYNC",
+    "metrics": {
+      "p50": 180.5,
+      "p95": 450.2,
+      "p99": 650.8,
+      "avg": 210.3,
+      "max": 800.0,
+      "min": 50.1,
+      "totalRequests": 500,
+      "throughput": 45.2,
+      "failureRate": 0.15
+    }
+  }
+}
