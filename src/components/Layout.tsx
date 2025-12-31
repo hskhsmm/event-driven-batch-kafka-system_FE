@@ -9,7 +9,7 @@ import {
   Tabs,
   Tab,
 } from '@mui/material';
-import { Campaign, BarChart, Schedule, Science } from '@mui/icons-material';
+import { Campaign, BarChart, Schedule, Science, Monitor, TrendingUp, Speed } from '@mui/icons-material';
 
 const Layout = () => {
   const location = useLocation();
@@ -21,6 +21,9 @@ const Layout = () => {
     if (location.pathname.startsWith('/admin/dashboard')) return 1;
     if (location.pathname.startsWith('/admin/batch')) return 2;
     if (location.pathname.startsWith('/admin/performance')) return 3;
+    if (location.pathname.startsWith('/admin/monitoring')) return 4;
+    if (location.pathname.startsWith('/admin/trends')) return 5;
+    if (location.pathname.startsWith('/admin/load-test')) return 6;
     return 0; // 기본값
   };
 
@@ -135,6 +138,27 @@ const Layout = () => {
                 iconPosition="start"
                 component={Link}
                 to="/admin/performance"
+              />
+              <Tab
+                label="실시간 모니터링"
+                icon={<Monitor />}
+                iconPosition="start"
+                component={Link}
+                to="/admin/monitoring"
+              />
+              <Tab
+                label="캠페인 트렌드"
+                icon={<TrendingUp />}
+                iconPosition="start"
+                component={Link}
+                to="/admin/trends"
+              />
+              <Tab
+                label="부하 테스트"
+                icon={<Speed />}
+                iconPosition="start"
+                component={Link}
+                to="/admin/load-test"
               />
             </Tabs>
           </Box>
