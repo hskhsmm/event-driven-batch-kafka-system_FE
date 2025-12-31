@@ -11,7 +11,7 @@ import {
 } from '@mui/material';
 import { Search } from '@mui/icons-material';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import apiClient from '../../api/client';
+import { getCampaignStats } from '../../api/stats';
 import { format, subDays } from 'date-fns';
 
 interface DailyStats {
@@ -33,11 +33,12 @@ const CampaignTrends = () => {
   const handleSearch = async () => {
     setLoading(true);
     try {
-      const response = await apiClient.get(
-        `/api/admin/stats/campaign/${campaignId}?startDate=${startDate}&endDate=${endDate}`
+      const data = await getCampaignStats(
+        parseInt(campaignId),
+        startDate,
+        endDate
       );
 
-      const data = response.data.data;
       setCampaignName(data.campaignName);
       setDailyStats(data.dailyStats);
 

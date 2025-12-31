@@ -13,7 +13,7 @@ import {
 } from '@mui/material';
 import { PlayArrow, Stop } from '@mui/icons-material';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import apiClient from '../../api/client';
+import { getCampaignRealtimeStatus } from '../../api/campaigns';
 
 interface CampaignStatus {
   campaignId: number;
@@ -50,8 +50,7 @@ const RealtimeMonitoring = () => {
 
     const interval = setInterval(async () => {
       try {
-        const response = await apiClient.get(`/api/campaigns/${campaignId}/status`);
-        const newStatus: CampaignStatus = response.data.data;
+        const newStatus = await getCampaignRealtimeStatus(parseInt(campaignId));
 
         setStatus(newStatus);
 
