@@ -236,7 +236,7 @@ const LoadTestResults = () => {
         </Grid>
       </Paper>
 
-      {/* 결과 표시 */}
+      {/* 비교 결과 (둘 다 있을 때만) */}
       {kafkaResult?.metrics && syncResult?.metrics && (
         <>
           <Paper sx={{ p: 3, mb: 3, bgcolor: 'success.light' }}>
@@ -261,10 +261,14 @@ const LoadTestResults = () => {
               </BarChart>
             </ResponsiveContainer>
           </Paper>
+        </>
+      )}
 
-          {/* 상세 메트릭 */}
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
+      {/* 개별 결과 표시 */}
+      {(kafkaResult?.metrics || syncResult?.metrics) && (
+        <Grid container spacing={3}>
+          {kafkaResult?.metrics && (
+            <Grid item xs={12} md={kafkaResult?.metrics && syncResult?.metrics ? 6 : 12}>
               <Paper sx={{ p: 3 }}>
                 <Typography variant="h6" gutterBottom>
                   Kafka 방식 결과
@@ -272,7 +276,9 @@ const LoadTestResults = () => {
                 <MetricCard result={kafkaResult} />
               </Paper>
             </Grid>
-            <Grid item xs={12} md={6}>
+          )}
+          {syncResult?.metrics && (
+            <Grid item xs={12} md={kafkaResult?.metrics && syncResult?.metrics ? 6 : 12}>
               <Paper sx={{ p: 3 }}>
                 <Typography variant="h6" gutterBottom>
                   동기 방식 결과
@@ -280,8 +286,8 @@ const LoadTestResults = () => {
                 <MetricCard result={syncResult} />
               </Paper>
             </Grid>
-          </Grid>
-        </>
+          )}
+        </Grid>
       )}
     </Container>
   );
@@ -291,18 +297,18 @@ const LoadTestResults = () => {
 const MetricCard = ({ result }: { result: LoadTestResult }) => (
   <Box>
     <Typography variant="body2" color="text.secondary">응답 시간</Typography>
-    <Typography>평균: {result.metrics?.avg.toFixed(2)}ms</Typography>
-    <Typography>P50: {result.metrics?.p50.toFixed(2)}ms</Typography>
-    <Typography>P95: {result.metrics?.p95.toFixed(2)}ms</Typography>
-    <Typography>P99: {result.metrics?.p99.toFixed(2)}ms</Typography>
-    <Typography>최대: {result.metrics?.max.toFixed(2)}ms</Typography>
+    <Typography>평균: {(result.metrics?.avg ?? 0).toFixed(2)}ms</Typography>
+    <Typography>P50: {(result.metrics?.p50 ?? 0).toFixed(2)}ms</Typography>
+    <Typography>P95: {(result.metrics?.p95 ?? 0).toFixed(2)}ms</Typography>
+    <Typography>P99: {(result.metrics?.p99 ?? 0).toFixed(2)}ms</Typography>
+    <Typography>최대: {(result.metrics?.max ?? 0).toFixed(2)}ms</Typography>
 
     <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>처리량</Typography>
-    <Typography>총 요청: {result.metrics?.totalRequests}</Typography>
-    <Typography>TPS: {result.metrics?.throughput.toFixed(2)} req/s</Typography>
+    <Typography>총 요청: {result.metrics?.totalRequests ?? 0}</Typography>
+    <Typography>TPS: {(result.metrics?.throughput ?? 0).toFixed(2)} req/s</Typography>
 
     <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>실패율</Typography>
-    <Typography>{(result.metrics?.failureRate * 100).toFixed(2)}%</Typography>
+    <Typography>{((result.metrics?.failureRate ?? 0) * 100).toFixed(2)}%</Typography>
   </Box>
 );
 
