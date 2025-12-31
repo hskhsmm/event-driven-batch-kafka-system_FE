@@ -7,6 +7,7 @@ import StatsDashboard from './pages/admin/StatsDashboard';
 import CampaignDetailStats from './pages/admin/CampaignDetailStats';
 import BatchManagement from './pages/admin/BatchManagement';
 import PerformanceTest from './pages/admin/PerformanceTest';
+import RealtimeMonitoring from './pages/admin/RealtimeMonitoring';
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
           <Route path="dashboard" element={<StatsDashboard />} />
           <Route path="batch" element={<BatchManagement />} />
           <Route path="performance" element={<PerformanceTest />} />
+          <Route path="monitoring" element={<RealtimeMonitoring />} />
         </Route>
 
         {/* 404 */}
