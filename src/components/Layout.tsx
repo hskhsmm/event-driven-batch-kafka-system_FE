@@ -22,8 +22,7 @@ const Layout = () => {
     if (location.pathname.startsWith('/admin/batch')) return 2;
     if (location.pathname.startsWith('/admin/performance')) return 3;
     if (location.pathname.startsWith('/admin/monitoring')) return 4;
-    if (location.pathname.startsWith('/admin/trends')) return 5;
-    if (location.pathname.startsWith('/admin/load-test')) return 6;
+    if (location.pathname.startsWith('/admin/load-test')) return 5;
     return 0; // 기본값
   };
 
@@ -146,13 +145,7 @@ const Layout = () => {
                 component={Link}
                 to="/admin/monitoring"
               />
-              <Tab
-                label="캠페인 트렌드"
-                icon={<TrendingUp />}
-                iconPosition="start"
-                component={Link}
-                to="/admin/trends"
-              />
+
               <Tab
                 label="부하 테스트"
                 icon={<Speed />}
