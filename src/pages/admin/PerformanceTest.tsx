@@ -130,48 +130,7 @@ const PerformanceTest = () => {
         )}
       </Paper>
 
-      {/* 2. 아키텍처 성능 비교 */}
-      <Paper sx={{ p: 3 }}>
-        <Typography variant="h5" gutterBottom>
-          실험 2: 동기 vs 비동기(Kafka) 아키텍처 비교
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          k6와 같은 부하 테스트 도구를 사용하여 동일한 요청(10,000건)을 보냈을 때의 시스템 반응을 비교합니다. (k6 테스트 결과 기반 예시 데이터)
-        </Typography>
-        <TableContainer component={Paper}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>지표</TableCell>
-                <TableCell align="center">동기 방식 (Sync)</TableCell>
-                <TableCell align="center">비동기 방식 (Kafka)</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              <TableRow>
-                <TableCell>응답 시간 (p95)</TableCell>
-                <TableCell align="center"><Chip label="3,500 ms" color="error" /></TableCell>
-                <TableCell align="center"><Chip label="45 ms" color="success" /></TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell>처리량 (RPS)</TableCell>
-                <TableCell align="center">~500 RPS</TableCell>
-                <TableCell align="center">~3,000+ RPS</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell>성공률 (10k 요청)</TableCell>
-                <TableCell align="center">70% (서버 다운 발생)</TableCell>
-                <TableCell align="center">100% (안정적 처리)</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell>재고 정확성</TableCell>
-                 <TableCell align="center">❌ 실패 (초과 판매 발생)</TableCell>
-                <TableCell align="center">✅ 성공 (정확히 일치)</TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Paper>
+
     </Box>
   );
 };
