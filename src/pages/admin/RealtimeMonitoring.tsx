@@ -10,6 +10,7 @@ import {
   TextField,
   Button,
   LinearProgress,
+  Alert,
 } from '@mui/material';
 import { PlayArrow, Stop } from '@mui/icons-material';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
@@ -106,6 +107,15 @@ const RealtimeMonitoring = () => {
       <Typography variant="h4" gutterBottom>
         실시간 모니터링 대시보드
       </Typography>
+
+      <Alert severity="info" sx={{ mb: 3 }}>
+        <Typography variant="subtitle2" component="div" sx={{ fontWeight: 'bold' }}>페이지 설명</Typography>
+        <ul style={{ margin: '8px 0 0 20px', padding: 0 }}>
+          <li><Typography variant="body2">이 대시보드는 선택된 캠페인의 진행 상황을 <strong>1초 간격</strong>으로 조회하여 실시간으로 보여줍니다.</Typography></li>
+          <li><Typography variant="body2"><strong>TPS (Transaction Per Second)</strong>는 1초당 처리된 참여 요청 수를 의미합니다.</Typography></li>
+          <li><Typography variant="body2">차트에는 최근 <strong>60개</strong>의 데이터만 표시하여 현재 추이를 집중적으로 보여줍니다 (Rolling Window).</Typography></li>
+        </ul>
+      </Alert>
 
       {/* 컨트롤 */}
       <Paper sx={{ p: 3, mb: 3 }}>

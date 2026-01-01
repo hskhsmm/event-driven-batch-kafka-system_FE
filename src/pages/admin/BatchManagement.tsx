@@ -342,6 +342,12 @@ const BatchManagement = () => {
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
           지정된 횟수만큼 참여 요청을 Kafka에 직접 발행하여 부하를 시뮬레이션합니다.
         </Typography>
+        <Alert severity="info" sx={{ mb: 2 }}>
+          <Typography variant="subtitle2" component="div" sx={{ fontWeight: 'bold' }}>참고:</Typography>
+          <Typography variant="body2">
+            이 시뮬레이터는 Kafka 메시지 처리 기능 확인을 위한 것으로, 실제 사용자 환경과 유사한 부하 테스트(TPS, Latency 등 측정)는 '관리자 &gt; 부하 테스트' 페이지에서 진행합니다.
+          </Typography>
+        </Alert>
         {simError && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {simError}

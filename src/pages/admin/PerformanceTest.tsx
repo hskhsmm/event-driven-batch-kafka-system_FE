@@ -62,9 +62,13 @@ const PerformanceTest = () => {
         <Typography variant="h5" gutterBottom>
           배치(Batch) vs 직접 쿼리(Raw) 성능 비교
         </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          동일한 날짜의 통계 데이터를 조회할 때, 미리 집계된 배치 테이블을 조회하는 것과 원본 테이블을 직접 조회하는 것의 속도 차이를 측정합니다.
-        </Typography>
+        <Alert severity="info" sx={{ mb: 2, mt: 2 }}>
+          <Typography variant="subtitle2" component="div" sx={{ fontWeight: 'bold' }}>어떤 차이가 있나요?</Typography>
+          <ul style={{ margin: '8px 0 0 20px', padding: 0 }}>
+            <li><Typography variant="body2"><strong>Raw Query (직접 집계):</strong> 사용자가 조회할 때마다 원본 데이터(예: 모든 참여 기록)를 실시간으로 집계합니다. 데이터가 많을수록 DB에 큰 부하를 주며 응답 시간이 길어집니다.</Typography></li>
+            <li><Typography variant="body2"><strong>Batch Aggregated (배치 집계):</strong> 별도의 배치 작업이 주기적으로(예: 매일 자정) 미리 통계를 계산하여 요약 테이블에 저장해 둡니다. 사용자는 이 요약 테이블을 조회하므로, 거의 즉시 결과를 얻을 수 있으며 DB 부하가 거의 없습니다.</Typography></li>
+          </ul>
+        </Alert>
         <Grid container spacing={2} alignItems="center" sx={{ mb: 2 }}>
           <Grid item>
             <TextField
