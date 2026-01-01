@@ -1,5 +1,5 @@
 import apiClient from './client';
-import type { PerformanceStats, CampaignStatsResponse, ApiResponse } from '../types/index';
+import type { PerformanceStats, CampaignStatsResponse, ApiResponse, OrderAnalysisResponse } from '../types/index';
 
 // 일자별 배치 집계 통계 조회 (빠른 API)
 export const getDailyPerformanceStats = async (date: string): Promise<PerformanceStats> => {
@@ -35,4 +35,26 @@ export const getCampaignStats = async (
 
   const response = await apiClient.get<ApiResponse<CampaignStatsResponse>>(url);
   return response.data.data;
+};
+
+// Kafka 순서 분석 조회 (GET /api/admin/stats/order-analysis/{campaignId})
+export const getOrderAnalysis = async (campaignId: number): Promise<OrderAnalysisResponse> => {
+  const response = await apiClient.get<ApiResponse<any>>(
+    `/api/admin/stats/order-analysis/${campaignId}`
+  );
+
+  const data = response.data.data;
+
+  // 백엔드가 partitionDistribution을 객체 {"0": 201}로 반환하므로 배열로 변환
+  const partitionDistribution = Object.entries(data.partitionDistribution || {}).map(
+    ([partition, count]) => ({
+      partition: parseInt(partition),
+      count: count as number,
+    })
+  );
+
+  return {
+    ...data,
+    partitionDistribution,
+  };
 };
