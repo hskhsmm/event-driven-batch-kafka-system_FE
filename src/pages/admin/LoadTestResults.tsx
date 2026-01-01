@@ -15,16 +15,28 @@ import {
   FormControlLabel,
   LinearProgress,
   Chip,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Divider,
 } from '@mui/material';
-import { PlayArrow, Speed, Timer } from '@mui/icons-material';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
+import { PlayArrow, Speed, Timer, Analytics } from '@mui/icons-material';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
 import {
   executeKafkaTest,
   executeSyncTest,
   getLoadTestResult,
   type LoadTestResult,
 } from '../../api/loadTest';
+import { getOrderAnalysis } from '../../api/stats';
+import type { OrderAnalysisResponse } from '../../types';
 import { useToast } from '../../components/ToastProvider';
+
+// 파이 차트 색상
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];
 
 const LoadTestResults = () => {
   const { showToast } = useToast();
@@ -45,6 +57,18 @@ const LoadTestResults = () => {
   const [syncProgress, setSyncProgress] = useState(0);
   const [kafkaStartTime, setKafkaStartTime] = useState<number | null>(null);
   const [syncStartTime, setSyncStartTime] = useState<number | null>(null);
+
+  // 순서 분석 상태
+  const [orderAnalysis, setOrderAnalysis] = useState<OrderAnalysisResponse | null>(null);
+  const [orderAnalysisLoading, setOrderAnalysisLoading] = useState(false);
+
+  // 파티션 비교용 데이터 (여러 테스트 결과 저장)
+  interface PartitionTestResult {
+    partitions: number;
+    kafkaResult?: LoadTestResult;
+    orderAnalysis?: OrderAnalysisResponse;
+  }
+  const [comparisonResults, setComparisonResults] = useState<PartitionTestResult[]>([]);
 
   // 수동 모드: JSON 파일 로드
   const loadManualResults = async () => {
@@ -172,6 +196,51 @@ const LoadTestResults = () => {
     }, 2000);
   };
 
+  // 순서 분석 실행
+  const handleOrderAnalysis = async () => {
+    try {
+      setOrderAnalysisLoading(true);
+      showToast('순서 분석을 시작합니다...', 'info');
+
+      const result = await getOrderAnalysis(parseInt(campaignId));
+      setOrderAnalysis(result);
+      showToast('순서 분석이 완료되었습니다!', 'success');
+    } catch (error) {
+      showToast('순서 분석 중 오류가 발생했습니다.', 'error');
+      console.error('Order analysis error:', error);
+    } finally {
+      setOrderAnalysisLoading(false);
+    }
+  };
+
+  // 비교 결과에 추가
+  const addToComparison = () => {
+    if (!kafkaResult || !orderAnalysis) {
+      showToast('Kafka 테스트 결과와 순서 분석 결과가 모두 필요합니다.', 'warning');
+      return;
+    }
+
+    const newResult: PartitionTestResult = {
+      partitions: parseInt(partitions),
+      kafkaResult,
+      orderAnalysis,
+    };
+
+    // 중복 체크 (같은 파티션 개수가 이미 있으면 덮어쓰기)
+    setComparisonResults((prev) => {
+      const filtered = prev.filter((r) => r.partitions !== parseInt(partitions));
+      return [...filtered, newResult].sort((a, b) => a.partitions - b.partitions);
+    });
+
+    showToast(`파티션 ${partitions}개 결과를 비교 목록에 추가했습니다.`, 'success');
+  };
+
+  // 비교 결과 초기화
+  const clearComparison = () => {
+    setComparisonResults([]);
+    showToast('비교 목록을 초기화했습니다.', 'info');
+  };
+
   // 비교 차트 데이터
   const comparisonData = kafkaResult?.metrics && syncResult?.metrics ? [
     { name: 'P50', Kafka: kafkaResult.metrics.p50, 동기: syncResult.metrics.p50 },
@@ -205,6 +274,16 @@ const LoadTestResults = () => {
         {!useAutoMode && (
           <Alert severity="info" sx={{ mt: 2 }}>
             수동 모드: K6 테스트를 직접 실행하고 결과를 <code>frontend/public/k6-results.json</code>에 저장하세요.
+          </Alert>
+        )}
+
+        {useAutoMode && (
+          <Alert severity="warning" sx={{ mt: 2 }}>
+            <strong>⚠️ 파티션 수동 설정 필요:</strong> 테스트 전에 Docker 명령어로 Kafka 토픽 파티션을 설정하세요.
+            <br />
+            <code style={{ fontSize: '0.85em', display: 'block', marginTop: '8px', padding: '8px', backgroundColor: 'rgba(0,0,0,0.1)', borderRadius: '4px' }}>
+              docker exec kafka kafka-topics --bootstrap-server kafka:29092 --alter --topic campaign-participation-topic --partitions 3
+            </code>
           </Alert>
         )}
       </Paper>
@@ -243,7 +322,7 @@ const LoadTestResults = () => {
                   value={partitions}
                   onChange={(e) => setPartitions(e.target.value)}
                   size="small"
-                  helperText="1, 3, 10 등"
+                  helperText="Docker로 수동 설정 필요"
                 />
               </Grid>
             </>
@@ -316,6 +395,43 @@ const LoadTestResults = () => {
         </Grid>
       </Paper>
 
+      {/* 순서 분석 버튼 */}
+      <Paper sx={{ p: 3, mb: 3, bgcolor: 'info.light' }}>
+        <Grid container spacing={2} alignItems="center">
+          <Grid item xs={12} sm={6}>
+            <Typography variant="h6" gutterBottom>
+              Kafka 순서 분석
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              파티션 개수에 따른 메시지 순서 정확도를 분석합니다. (파티션 1개 = ~100%, 파티션 4개+ = ~70%)
+            </Typography>
+          </Grid>
+          <Grid item xs={12} sm={3}>
+            <Button
+              variant="contained"
+              color="info"
+              startIcon={orderAnalysisLoading ? <CircularProgress size={20} /> : <Analytics />}
+              onClick={handleOrderAnalysis}
+              disabled={orderAnalysisLoading}
+              fullWidth
+            >
+              순서 분석 실행
+            </Button>
+          </Grid>
+          <Grid item xs={12} sm={3}>
+            <Button
+              variant="outlined"
+              color="secondary"
+              onClick={addToComparison}
+              disabled={!kafkaResult || !orderAnalysis}
+              fullWidth
+            >
+              비교 목록에 추가
+            </Button>
+          </Grid>
+        </Grid>
+      </Paper>
+
       {/* 비교 결과 (둘 다 있을 때만) */}
       {kafkaResult?.metrics && syncResult?.metrics && (
         <>
@@ -368,6 +484,332 @@ const LoadTestResults = () => {
             </Grid>
           )}
         </Grid>
+      )}
+
+      {/* 순서 분석 결과 */}
+      {orderAnalysis && (
+        <>
+          <Divider sx={{ my: 4 }} />
+          <Typography variant="h5" gutterBottom sx={{ mt: 4, mb: 3 }}>
+            📊 Kafka 순서 분석 결과
+          </Typography>
+
+          {/* 순서 분석 요약 */}
+          <Grid container spacing={3} sx={{ mb: 3 }}>
+            <Grid item xs={12} md={4}>
+              <Card sx={{ bgcolor: 'primary.light' }}>
+                <CardContent>
+                  <Typography variant="h6" color="primary.dark">총 레코드 수</Typography>
+                  <Typography variant="h4">{orderAnalysis.summary.totalRecords.toLocaleString()}</Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <Card sx={{ bgcolor: 'warning.light' }}>
+                <CardContent>
+                  <Typography variant="h6" color="warning.dark">순서 불일치</Typography>
+                  <Typography variant="h4">{orderAnalysis.summary.orderMismatches.toLocaleString()}</Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <Card sx={{ bgcolor: orderAnalysis.summary.orderAccuracy.includes('100') ? 'success.light' : 'info.light' }}>
+                <CardContent>
+                  <Typography variant="h6" color={orderAnalysis.summary.orderAccuracy.includes('100') ? 'success.dark' : 'info.dark'}>
+                    순서 일치율
+                  </Typography>
+                  <Typography variant="h4">{orderAnalysis.summary.orderAccuracy}</Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
+
+          {/* 파티션별 분포 */}
+          <Grid container spacing={3}>
+            <Grid item xs={12} md={6}>
+              <Paper sx={{ p: 3 }}>
+                <Typography variant="h6" gutterBottom>
+                  파티션별 메시지 분포
+                </Typography>
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={orderAnalysis.partitionDistribution}
+                      dataKey="count"
+                      nameKey="partition"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={100}
+                      label={(entry) => `P${entry.partition}: ${entry.count}`}
+                    >
+                      {orderAnalysis.partitionDistribution.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </Paper>
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+              <Paper sx={{ p: 3 }}>
+                <Typography variant="h6" gutterBottom>
+                  파티션별 메시지 수
+                </Typography>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={orderAnalysis.partitionDistribution}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="partition" label={{ value: '파티션', position: 'insideBottom', offset: -5 }} />
+                    <YAxis label={{ value: '메시지 수', angle: -90, position: 'insideLeft' }} />
+                    <Tooltip />
+                    <Bar dataKey="count" fill="#8884d8" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </Paper>
+            </Grid>
+          </Grid>
+
+          {/* 분석 상세 테이블 */}
+          <Paper sx={{ p: 3, mt: 3 }}>
+            <Typography variant="h6" gutterBottom>
+              파티션 분포 상세
+            </Typography>
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell><strong>파티션 번호</strong></TableCell>
+                    <TableCell align="right"><strong>메시지 수</strong></TableCell>
+                    <TableCell align="right"><strong>비율</strong></TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {orderAnalysis.partitionDistribution.map((item) => {
+                    const percentage = ((item.count / orderAnalysis.summary.totalRecords) * 100).toFixed(2);
+                    return (
+                      <TableRow key={item.partition}>
+                        <TableCell>파티션 {item.partition}</TableCell>
+                        <TableCell align="right">{item.count.toLocaleString()}</TableCell>
+                        <TableCell align="right">{percentage}%</TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Paper>
+
+          {/* 분석 결과 해석 */}
+          <Alert severity={orderAnalysis.summary.orderAccuracy.includes('100') ? 'success' : 'warning'} sx={{ mt: 3 }}>
+            <Typography variant="body1" gutterBottom>
+              <strong>분석 결과 해석:</strong>
+            </Typography>
+            <Typography variant="body2">
+              - <strong>순서 일치율:</strong> {orderAnalysis.summary.orderAccuracy}
+              {orderAnalysis.summary.orderAccuracy.includes('100')
+                ? ' (파티션이 1개일 경우 순서가 완벽히 보장됩니다)'
+                : ' (파티션이 여러 개일 경우 메시지 순서가 섞일 수 있습니다)'}
+            </Typography>
+            <Typography variant="body2">
+              - <strong>순서 불일치:</strong> {orderAnalysis.summary.orderMismatches}건
+              (Kafka offset 순서와 실제 처리 순서가 다른 경우)
+            </Typography>
+            <Typography variant="body2">
+              - <strong>파티션 개수:</strong> {orderAnalysis.partitionDistribution.length}개
+              {orderAnalysis.partitionDistribution.length === 1
+                ? ' (1개 파티션 = 순서 보장 ✅)'
+                : ` (${orderAnalysis.partitionDistribution.length}개 파티션 = 속도 향상, 순서 섞임 가능 ⚠️)`}
+            </Typography>
+            <Typography variant="body2" sx={{ mt: 1, fontWeight: 'bold' }}>
+              💡 결론: 파티션을 늘리면 처리 속도는 빨라지지만, 메시지 순서는 섞일 수 있습니다.
+              재고 정확성은 Atomic UPDATE로 보장됩니다!
+            </Typography>
+          </Alert>
+        </>
+      )}
+
+      {/* 파티션 비교 결과 */}
+      {comparisonResults.length > 0 && (
+        <>
+          <Divider sx={{ my: 4 }} />
+          <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
+            <Typography variant="h5" gutterBottom>
+              🔬 파티션 개수별 비교 분석
+            </Typography>
+            <Button variant="outlined" color="error" onClick={clearComparison}>
+              비교 목록 초기화
+            </Button>
+          </Box>
+
+          {/* 비교 테이블 */}
+          <Paper sx={{ p: 3, mb: 3 }}>
+            <Typography variant="h6" gutterBottom>
+              파티션 개수별 성능 비교
+            </Typography>
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell><strong>파티션 개수</strong></TableCell>
+                    <TableCell align="right"><strong>처리 속도 (평균)</strong></TableCell>
+                    <TableCell align="right"><strong>순서 일치율</strong></TableCell>
+                    <TableCell align="right"><strong>순서 불일치</strong></TableCell>
+                    <TableCell align="right"><strong>총 처리량 (TPS)</strong></TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {comparisonResults.map((result) => (
+                    <TableRow key={result.partitions}>
+                      <TableCell>
+                        <Chip
+                          label={`${result.partitions}개`}
+                          color={result.partitions === 1 ? 'success' : 'primary'}
+                          size="small"
+                        />
+                      </TableCell>
+                      <TableCell align="right">
+                        {result.kafkaResult?.metrics?.avg.toFixed(2)}ms
+                      </TableCell>
+                      <TableCell align="right">
+                        <Chip
+                          label={result.orderAnalysis?.summary.orderAccuracy || 'N/A'}
+                          color={result.orderAnalysis?.summary.orderAccuracy.includes('100') ? 'success' : 'warning'}
+                          size="small"
+                        />
+                      </TableCell>
+                      <TableCell align="right">
+                        {result.orderAnalysis?.summary.orderMismatches.toLocaleString() || 'N/A'}
+                      </TableCell>
+                      <TableCell align="right">
+                        {result.kafkaResult?.metrics?.throughput.toFixed(2)} req/s
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Paper>
+
+          {/* 비교 차트 */}
+          <Grid container spacing={3}>
+            {/* 처리 속도 비교 */}
+            <Grid item xs={12} md={6}>
+              <Paper sx={{ p: 3 }}>
+                <Typography variant="h6" gutterBottom>
+                  처리 속도 비교 (낮을수록 좋음)
+                </Typography>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart
+                    data={comparisonResults.map((r) => ({
+                      파티션: `${r.partitions}개`,
+                      '평균 응답시간 (ms)': r.kafkaResult?.metrics?.avg || 0,
+                    }))}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="파티션" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="평균 응답시간 (ms)" fill="#8884d8" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </Paper>
+            </Grid>
+
+            {/* 순서 일치율 비교 */}
+            <Grid item xs={12} md={6}>
+              <Paper sx={{ p: 3 }}>
+                <Typography variant="h6" gutterBottom>
+                  순서 일치율 비교 (높을수록 좋음)
+                </Typography>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart
+                    data={comparisonResults.map((r) => ({
+                      파티션: `${r.partitions}개`,
+                      '순서 일치율 (%)': parseFloat(r.orderAnalysis?.summary.orderAccuracy.replace('%', '') || '0'),
+                    }))}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="파티션" />
+                    <YAxis domain={[0, 100]} />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="순서 일치율 (%)" fill="#4caf50" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </Paper>
+            </Grid>
+
+            {/* 처리량 비교 */}
+            <Grid item xs={12} md={6}>
+              <Paper sx={{ p: 3 }}>
+                <Typography variant="h6" gutterBottom>
+                  처리량 비교 (높을수록 좋음)
+                </Typography>
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart
+                    data={comparisonResults.map((r) => ({
+                      파티션: `${r.partitions}개`,
+                      'TPS (req/s)': r.kafkaResult?.metrics?.throughput || 0,
+                    }))}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="파티션" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Line type="monotone" dataKey="TPS (req/s)" stroke="#ff7300" strokeWidth={2} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </Paper>
+            </Grid>
+
+            {/* 순서 불일치 비교 */}
+            <Grid item xs={12} md={6}>
+              <Paper sx={{ p: 3 }}>
+                <Typography variant="h6" gutterBottom>
+                  순서 불일치 비교 (낮을수록 좋음)
+                </Typography>
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart
+                    data={comparisonResults.map((r) => ({
+                      파티션: `${r.partitions}개`,
+                      '순서 불일치': r.orderAnalysis?.summary.orderMismatches || 0,
+                    }))}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="파티션" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Line type="monotone" dataKey="순서 불일치" stroke="#f44336" strokeWidth={2} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </Paper>
+            </Grid>
+          </Grid>
+
+          {/* 비교 결과 요약 */}
+          <Alert severity="info" sx={{ mt: 3 }}>
+            <Typography variant="body1" gutterBottom>
+              <strong>📊 비교 분석 요약:</strong>
+            </Typography>
+            <Typography variant="body2">
+              ✅ <strong>처리 속도:</strong> 파티션이 많을수록 병렬 처리로 빨라집니다.
+            </Typography>
+            <Typography variant="body2">
+              ⚠️ <strong>순서 일치율:</strong> 파티션이 1개일 때는 ~100%, 여러 개일 때는 ~70% (메시지 순서가 섞임)
+            </Typography>
+            <Typography variant="body2">
+              💡 <strong>트레이드오프:</strong> 파티션을 늘리면 속도는 빨라지지만 순서 보장은 약해집니다.
+            </Typography>
+            <Typography variant="body2" sx={{ mt: 1, fontWeight: 'bold' }}>
+              ✨ <strong>재고 정확성:</strong> 파티션 개수와 관계없이 Atomic UPDATE로 항상 정확합니다!
+            </Typography>
+          </Alert>
+        </>
       )}
     </Container>
   );
