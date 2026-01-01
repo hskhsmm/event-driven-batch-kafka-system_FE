@@ -3,6 +3,10 @@ import type { ApiResponse } from '../types';
 
 export interface LoadTestRequest {
   campaignId: number;
+  totalRequests: number;
+  partitions: number;
+
+  // Deprecated fields (하위 호환성용)
   virtualUsers?: number;
   duration?: number;
 }

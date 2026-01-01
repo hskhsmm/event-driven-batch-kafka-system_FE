@@ -31,7 +31,8 @@ const LoadTestResults = () => {
 
   const [useAutoMode, setUseAutoMode] = useState(false); // 자동/수동 모드 토글
   const [campaignId, setCampaignId] = useState('1');
-  const [virtualUsers, setVirtualUsers] = useState('100');
+  const [totalRequests, setTotalRequests] = useState('30000');
+  const [partitions, setPartitions] = useState('3');
 
   const [kafkaResult, setKafkaResult] = useState<LoadTestResult | null>(null);
   const [syncResult, setSyncResult] = useState<LoadTestResult | null>(null);
@@ -87,8 +88,8 @@ const LoadTestResults = () => {
 
       const { jobId } = await executeKafkaTest({
         campaignId: parseInt(campaignId),
-        virtualUsers: parseInt(virtualUsers),
-        duration: 5,
+        totalRequests: parseInt(totalRequests),
+        partitions: parseInt(partitions),
       });
 
       pollTestResult(jobId, setKafkaResult, setKafkaLoading, setKafkaProgress);
@@ -110,8 +111,8 @@ const LoadTestResults = () => {
 
       const { jobId } = await executeSyncTest({
         campaignId: parseInt(campaignId),
-        virtualUsers: parseInt(virtualUsers),
-        duration: 5,
+        totalRequests: parseInt(totalRequests),
+        partitions: parseInt(partitions),
       });
 
       pollTestResult(jobId, setSyncResult, setSyncLoading, setSyncProgress);
@@ -131,8 +132,8 @@ const LoadTestResults = () => {
     setProgress: (progress: number) => void
   ) => {
     let retryCount = 0;
-    const maxRetries = 60; // 2초 * 60 = 120초
-    const estimatedDuration = 10000; // K6 테스트는 약 10초 예상 (5초 실행 + 오버헤드)
+    const maxRetries = 150; // 2초 * 150 = 300초 (5분)
+    const estimatedDuration = 40000; // K6 테스트는 약 40초 예상 (30초 실행 + 오버헤드)
 
     const interval = setInterval(async () => {
       try {
@@ -211,7 +212,7 @@ const LoadTestResults = () => {
       {/* 테스트 실행 */}
       <Paper sx={{ p: 3, mb: 3 }}>
         <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} sm={4}>
+          <Grid item xs={12} sm={3}>
             <TextField
               fullWidth
               label="캠페인 ID"
@@ -222,18 +223,32 @@ const LoadTestResults = () => {
             />
           </Grid>
           {useAutoMode && (
-            <Grid item xs={12} sm={4}>
-              <TextField
-                fullWidth
-                label="가상 사용자 수"
-                type="number"
-                value={virtualUsers}
-                onChange={(e) => setVirtualUsers(e.target.value)}
-                size="small"
-              />
-            </Grid>
+            <>
+              <Grid item xs={12} sm={3}>
+                <TextField
+                  fullWidth
+                  label="총 요청 수"
+                  type="number"
+                  value={totalRequests}
+                  onChange={(e) => setTotalRequests(e.target.value)}
+                  size="small"
+                  helperText="1000, 10000, 30000, 100000 등"
+                />
+              </Grid>
+              <Grid item xs={12} sm={3}>
+                <TextField
+                  fullWidth
+                  label="파티션 수"
+                  type="number"
+                  value={partitions}
+                  onChange={(e) => setPartitions(e.target.value)}
+                  size="small"
+                  helperText="1, 3, 10 등"
+                />
+              </Grid>
+            </>
           )}
-          <Grid item xs={12} sm={4}>
+          <Grid item xs={12} sm={useAutoMode ? 3 : 4}>
             {useAutoMode ? (
               <Box display="flex" gap={1}>
                 <Button
