@@ -55,13 +55,12 @@ const PerformanceTest = () => {
   return (
     <Box>
       <Typography variant="h4" gutterBottom>
-        성능 비교 테스트
+        DB 쿼리 성능 비교
       </Typography>
 
-      {/* 1. 배치 성능 비교 */}
       <Paper sx={{ p: 3, mb: 4 }}>
         <Typography variant="h5" gutterBottom>
-          실험 1: 배치(Batch) vs 직접 쿼리(Raw) 성능 비교
+          배치(Batch) vs 직접 쿼리(Raw) 성능 비교
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
           동일한 날짜의 통계 데이터를 조회할 때, 미리 집계된 배치 테이블을 조회하는 것과 원본 테이블을 직접 조회하는 것의 속도 차이를 측정합니다.
