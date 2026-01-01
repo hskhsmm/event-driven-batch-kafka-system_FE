@@ -172,3 +172,24 @@ export interface SyncParticipationResponse {
   status: 'SUCCESS' | 'FAIL';
   method: 'SYNC';
 }
+
+// --- Kafka 순서 분석 타입 (2025-01-02 추가) ---
+
+// 파티션별 메시지 분포
+export interface PartitionDistribution {
+  partition: number;
+  count: number;
+}
+
+// 순서 분석 응답 (GET /api/admin/stats/order-analysis/{campaignId})
+export interface OrderAnalysisResponse {
+  campaignId: number;
+  queryTimeMs: number;
+  summary: {
+    totalRecords: number;
+    orderMismatches: number;
+    orderAccuracy: string;
+  };
+  partitionDistribution: PartitionDistribution[];
+  partitionCount?: number; // 파티션 개수 (optional, 백엔드에서 전달 시)
+}
