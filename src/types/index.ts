@@ -142,6 +142,11 @@ export interface CampaignRealtimeStatus {
   failCount: number;
   totalParticipation: number;
   stockUsageRate: string;
+  processingMetrics?: {
+    actualTps: number;        // 실제 메시지 처리 TPS
+    avgLatencyMs: number;      // 평균 처리 지연시간 (Kafka → DB)
+    recentProcessed: number;   // 최근 5초간 처리된 메시지 수
+  };
 }
 
 // 성능 비교용 통계 데이터 (공용 구조)
@@ -192,4 +197,13 @@ export interface OrderAnalysisResponse {
   };
   partitionDistribution: PartitionDistribution[];
   partitionCount?: number; // 파티션 개수 (optional, 백엔드에서 전달 시)
+}
+
+// --- 처리 로그 타입 (2025-01-02 추가) ---
+
+// 로그 엔트리
+export interface LogEntry {
+  timestamp: string;
+  level: string;
+  message: string;
 }
