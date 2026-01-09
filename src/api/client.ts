@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Axios 인스턴스 생성
 const apiClient = axios.create({
-  baseURL: '', // Vite 프록시 사용
+  baseURL: import.meta.env.PROD ? import.meta.env.VITE_API_BASE_URL : '', // 프로덕션: ALB DNS, 개발: Vite 프록시
   headers: {
     'Content-Type': 'application/json',
   },
