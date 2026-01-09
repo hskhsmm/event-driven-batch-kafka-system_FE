@@ -5,10 +5,9 @@ import {
   Container,
   Typography,
   Button,
-  GridLegacy as Grid,
+  Grid,
   Card,
   CardContent,
-  CardActions,
   LinearProgress,
   Skeleton,
 } from '@mui/material';
@@ -162,7 +161,7 @@ const LandingPage = () => {
       >
         <Container maxWidth="lg">
           <Grid container spacing={6}>
-            <Grid item size={{ xs: 12, md: 4 }}>
+            <Grid item xs={12} md={4}>
               <Box
                 sx={{
                   textAlign: 'center',
@@ -184,7 +183,7 @@ const LandingPage = () => {
                 </Typography>
               </Box>
             </Grid>
-            <Grid item size={{ xs: 12, md: 4 }}>
+            <Grid item xs={12} md={4}>
               <Box
                 sx={{
                   textAlign: 'center',
@@ -207,7 +206,7 @@ const LandingPage = () => {
                 </Typography>
               </Box>
             </Grid>
-            <Grid item size={{ xs: 12, md: 4 }}>
+            <Grid item xs={12} md={4}>
               <Box
                 sx={{
                   textAlign: 'center',
@@ -255,7 +254,7 @@ const LandingPage = () => {
           <Grid container spacing={4}>
             {loading
               ? [1, 2, 3].map((n) => (
-                  <Grid item size={{ xs: 12, md: 4 }} key={n}>
+                  <Grid item xs={12} md={4} key={n}>
                     <Card>
                       <CardContent>
                         <Skeleton variant="text" height={40} />
@@ -270,7 +269,7 @@ const LandingPage = () => {
                   const isOpen = campaign.status === 'OPEN' && campaign.currentStock > 0;
 
                   return (
-                    <Grid item size={{ xs: 12, md: 4 }} key={campaign.id}>
+                    <Grid item xs={12} md={4} key={campaign.id}>
                       <Card
                         sx={{
                           height: '100%',

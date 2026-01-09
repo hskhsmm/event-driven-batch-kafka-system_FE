@@ -70,7 +70,7 @@ const PerformanceTest = () => {
           </ul>
         </Alert>
         <Grid container spacing={2} alignItems="center" sx={{ mb: 2 }}>
-          <Grid item>
+          <Grid>
             <TextField
               label="조회 날짜"
               type="date"
@@ -80,7 +80,7 @@ const PerformanceTest = () => {
               size="small"
             />
           </Grid>
-          <Grid item>
+          <Grid>
             <Button
               variant="contained"
               startIcon={loading ? <CircularProgress size={20} /> : <Science />}
